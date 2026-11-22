@@ -8,6 +8,7 @@ ROOT = Path(__file__).resolve().parents[1]
 DATASETS = {'field': '十一月 · 巡店原件', 'reference': '十一月 · 核验副本'}
 RULE_VERSION = '2026.11-r1'
 TABLES = ('stores', 'slots', 'visits', 'plans', 'aliases', 'photos', 'observations')
+OPTIONAL_TABLES = ('rules',)
 MAX_TABLE_BYTES = 512_000
 MAX_PHOTO_BYTES = 128_000
 MAX_PHOTOS = 256

@@ -30,7 +30,7 @@ def test_equal_penalty_rules_use_stable_priority_not_mapping_order():  # TRAP-19
 
 def test_wrong_sku_preserves_actual_goods_and_sources(field):
     row = locate_or_fail(field.penalties['rows'], key='005:A01')
-    assert (row['reason'], row['original_cents']) == ('WRONG_SKU', 9000)
+    assert (row['reason'], row['original_cents']) == ('WRONG_SKU', 11000)
     assert row['applied']['proof']['skus'] == ['MALT-900']
     assert row['applied']['proof']['sources'][0].startswith('observations.csv:')
 

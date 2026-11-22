@@ -90,7 +90,9 @@ function syncDashboard(snapshot) {
   get('matrix-meta').textContent = `${snapshot.coverage.selected} 柜`;
   get('gap-meta').textContent = `${snapshot.coverage.verified} / ${snapshot.coverage.target} 已核`;
   get('cases-meta').textContent = `${snapshot.settlement.counts.VIOLATION} 笔违规`;
-  get('account-meta').textContent = snapshot.appeals.balanced ? '勾稽通过 · 元' : '待勾稽';
+  const batchBalanced = snapshot.batch?.balanced;
+  get('account-meta').textContent = batchBalanced ? '勾稽通过 · 逐柜规则版本 · 元' : '待勾稽';
+  get('version-meta').textContent = (snapshot.batch?.versions || []).map(item => item.version).join(' / ') || '单版';
   get('run-meta').textContent = `${localTime.format(new Date(snapshot.manifest.created_at))} · UTC+08:00 · ${snapshot.manifest.rule_version}`;
   get('run-feedback').textContent = snapshot.reused ? '已复用巡检批次 · 对账通过' : '巡检完成 · 对账通过';
   const link = get('export');

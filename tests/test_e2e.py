@@ -29,4 +29,4 @@ def test_persistent_snapshot_and_event_survive_application_restart(settings):
     with TestClient(create_app(settings)) as restored:
         result = restored.get(f'/api/settlement/runs/{run_id}').json()
         assert result['events'][0]['status'] == 'OPEN'
-        assert result['appeals']['net_cents'] == 29500
+        assert result['appeals']['net_cents'] == 31500

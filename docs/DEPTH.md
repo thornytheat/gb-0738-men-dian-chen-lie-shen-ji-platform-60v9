@@ -14,6 +14,7 @@
 | M5 罚则裁决 | 确定缺品、乱陈、排面和价签的处罚 | `GET /api/penalties` | `app/modules/penalties/rules.py` `app/modules/penalties/service.py` | `tests/test_penalties.py` |
 | M6 结算勾稽 | 按原件、柜位和金额对账并留存批次 | `GET /api/settlement` `POST /api/settlement/runs` | `app/modules/settlement/reconcile.py` `app/modules/settlement/service.py` `app/store.py` | `tests/test_settlement.py` |
 | M7 异议复核 | 留存复核时序、重算净额并导出 | `GET /api/appeals/{run_id}` `POST /api/appeals/{run_id}/events` | `app/modules/appeals/transitions.py` `app/modules/appeals/service.py` | `tests/test_appeals.py` |
+| M8 罚则版本与批次 | 按巡检时点选规则版本，逐柜标执行额，留存批次历史 | `GET /api/settlement/runs/{run_id}/batch` `GET /api/settlement/runs` `POST /api/settlement/runs/{run_id}/rollback` | `app/modules/penalties/catalog.py` `app/modules/settlement/service.py` `app/store.py` | `tests/test_rule_versions.py` `tests/test_batches.py` |
 
 ## 陷阱登记
 
@@ -41,10 +42,15 @@
 | TRAP-26 | `sample_data/field/` 的 `002:A03` 异议测试以旧版本重提 | 覆盖已受理 | 版本锁加唯一请求键 | `app/modules/appeals/transitions.py` `app/store.py` | `tests/test_appeals.py::test_stale_appeal_version_cannot_override_current_stage` |
 | TRAP-27 | `sample_data/field/photos/P002.png` 与 `P010.png` 字节相同且绑不同柜位 | 文件名不同便放行 | 实际 SHA-256 验两侧绑定 | `app/modules/photos/fingerprints.py` `app/modules/photos/bindings.py` | `tests/test_photos.py::test_different_file_names_with_equal_bytes_flag_both_bindings` |
 | TRAP-28 | `sample_data/field/` 的 `001:A04` 缺图、`002:A03` 已完成清点但缺品 | 都当缺品开罚，或都搁置 | 前者待证且 0 元，后者罚 150 元 | `app/modules/coverage/service.py` `app/modules/penalties/rules.py` | `tests/test_penalties.py::test_missing_photo_and_missing_sku_have_distinct_amounts` |
+| TRAP-29 | `sample_data/field/rules.csv` 的 11 月 10 日生效点，巡检跨点 | 整批套旧规（漏收生效后缺口）或整批套新规（改价生效前巡店） | 逐柜按巡检时点选版本计价 | `app/modules/penalties/catalog.py` `app/modules/penalties/service.py` | `tests/test_rule_versions.py::test_each_slot_is_priced_with_the_rule_effective_at_its_visit` |
+| TRAP-30 | 规则窗口叠期或留空 | 静默取一版开罚 | 单柜隔离并列出候选版本 | `app/modules/penalties/catalog.py` | `tests/test_rule_versions.py::test_overlapping_rule_windows_isolate_the_slot_instead_of_pricing` `tests/test_rule_versions.py::test_gap_in_rule_windows_isolates_the_slot_as_rule_missing` |
+| TRAP-31 | 同一规则版本重跑同一档件 | 追加第二柜行或按新时长改价 | 命中同一 `run_id`，原样复用批次 | `app/store.py` `app/modules/settlement/service.py` | `tests/test_batches.py::test_rerun_under_same_rules_neither_adds_a_slot_nor_reprices` |
+| TRAP-32 | 生成中途解析失败 | 写半批并覆盖已交财务的批次 | 零快照、记录失败、现存批次保持 ACTIVE | `app/modules/settlement/service.py` `app/store.py` | `tests/test_batches.py::test_failed_generation_leaves_the_published_batch_untouched` |
+| TRAP-33 | 新批次取代旧批次或回滚 | 删除旧批或复活已回滚批次 | 批次只改状态、历史只追加，回滚后重跑返回 409 | `app/store.py` `app/modules/settlement/handler.py` | `tests/test_batches.py::test_rollback_restores_the_prior_batch_and_keeps_the_failed_one_queryable` `tests/test_batches.py::test_rolled_back_batch_cannot_be_silently_republished` |
 
 ## 对账
 
 - 抽样目标 18＝17 实际抽中＋1 名册缺额。抽中 17＝8 合规＋3 违规＋3 待证＋3 隔离。
-- 原罚额 29 500 分＝15 000 缺品＋5 500 排面不足＋9 000 错品。
+- 原罚额 31 500 分＝15 000 缺品＋5 500 排面不足＋11 000 错品。拆到规则版本：`2026.11-r1` 20 500 分（15 000＋5 500），`2026.11-r2` 11 000 分（错品）。若整批套用旧规会得 29 500 分、漏收生效后缺口；若整批套用新规会把生效前柜位改价。
 - 七档原件均按源行号对账。清点表 50＝40 采信＋10 隔离；两条同柜矛盾行有各自来源。
 - 异议记录逐柜追加，最终净额从原罚额减去确认的减免。对账支持同计数但错行、元分混用和重复事件等反例。

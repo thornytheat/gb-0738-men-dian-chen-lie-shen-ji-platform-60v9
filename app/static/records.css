@@ -58,3 +58,5 @@ input, select { border: 1px solid var(--line-2); border-radius: 4px; background:
 .appeal-form .appeal-note input { width: min(100%, 230px); }
 #appeal-feedback { flex-basis: 100%; color: var(--ok); font-size: 12px; }
 #appeal-feedback.error { color: var(--bad); }
+.version-line { display: flex; justify-content: space-between; align-items: center; gap: 8px; padding: 7px var(--pad); border-top: 1px solid var(--line); font-size: 11px; }
+.version-line strong { font: 600 11px var(--mono); color: var(--ok); }

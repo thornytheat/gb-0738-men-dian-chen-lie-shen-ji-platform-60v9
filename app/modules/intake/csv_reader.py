@@ -13,6 +13,7 @@ HEADERS = {
     'aliases': ('alias', 'sku'),
     'photos': ('photo', 'visit', 'slot', 'file', 'captured'),
     'observations': ('visit', 'slot', 'photo', 'kind', 'sku', 'facings', 'price_cents'),
+    'rules': ('version', 'start_utc', 'end_utc', 'MISSING_SKU', 'WRONG_SKU', 'UNDER_FACINGS', 'PRICE_MISMATCH'),
 }
 
 

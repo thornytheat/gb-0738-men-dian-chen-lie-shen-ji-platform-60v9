@@ -20,7 +20,7 @@ def open_and_reduce(client, run):
 def test_appeal_adjusts_net_and_retains_original_penalty_and_sources(client, run):
     events = open_and_reduce(client, run)
     result = client.get(path(run)).json()
-    assert (result['original_cents'], result['reduction_cents'], result['net_cents']) == (29500, 6000, 23500)
+    assert (result['original_cents'], result['reduction_cents'], result['net_cents']) == (31500, 6000, 25500)
     assert result['events'] == list(events)
     assert events[1]['original_rule'] == 'MISSING_SKU' and events[1]['plan_source'] == 'plans.csv:3'
     assert locate_or_fail(result['rows'], key='002:A03')['net_cents'] == 9000
@@ -67,7 +67,7 @@ def test_single_export_contains_hashes_events_and_original_evidence(client, run,
     exported = response.json()
     assert exported['format'] == 'shelf-evidence/audit-1'
     assert exported['manifest']['inputs']['photos/P001.png'] == sha256(field.bundle['photos/P001.png']).hexdigest()
-    assert exported['appeals']['net_cents'] == 23500
+    assert exported['appeals']['net_cents'] == 25500
     assert exported['events'][1]['evidence_ref'] == '回查票-27'
     assert 'PHOTO_REUSED' in exported['reason_dictionary']
 
@@ -77,7 +77,7 @@ def test_new_run_reuses_stored_clearance_and_preserves_event_order(client, run):
     restored = client.post('/api/settlement/runs', json={}).json()
     assert restored['reused'] is True
     assert restored['events'] == [initial, final]
-    assert restored['settlement']['original_cents'] == 29500
+    assert restored['settlement']['original_cents'] == 31500
 
 
 def test_concurrent_decisions_enforce_one_terminal_event(client, run):
@@ -92,5 +92,5 @@ def test_concurrent_decisions_enforce_one_terminal_event(client, run):
     assert sorted(response.status_code for response in results) == [200, 409]
     ledger = client.get(path(run)).json()
     assert [event['version'] for event in ledger['events']] == [1, 2]
-    assert ledger['net_cents'] in {14500, 29500}
-    assert ledger['net_cents'] + ledger['reduction_cents'] == 29500
+    assert ledger['net_cents'] in {16500, 31500}
+    assert ledger['net_cents'] + ledger['reduction_cents'] == 31500

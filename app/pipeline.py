@@ -2,6 +2,7 @@ from functools import cached_property
 
 from app.modules.coverage.service import coverage
 from app.modules.intake.service import acquire, receive
+from app.modules.penalties.catalog import load_rules
 from app.modules.penalties.service import judge
 from app.modules.photos.service import collect_evidence
 from app.modules.plans.service import plan_shelf
@@ -13,6 +14,12 @@ class Audit:
         self.bundle = acquire(settings.sample_root, options.dataset)
         self.options = options
 
+    def refresh(self):
+        """Drop derived caches so callers (and tests) can re-read the same bundle recursively."""
+        for name in ('intake', 'rules', 'plans', 'photos', 'coverage', 'penalties', 'settlement'):
+            self.__dict__.pop(name, None)
+        return self
+
     @cached_property
     def intake(self):
         return receive(self.bundle)
@@ -20,6 +27,10 @@ class Audit:
     @property
     def sample_size(self):
         return self.options.sample_size or self.intake['campaign']['sample_size']
+
+    @cached_property
+    def rules(self):
+        return load_rules(self.intake['tables'].get('rules'), self.intake['campaign'])
 
     @cached_property
     def plans(self):
@@ -35,8 +46,8 @@ class Audit:
 
     @cached_property
     def penalties(self):
-        return judge(self.coverage, self.intake['campaign'])
+        return judge(self.coverage, self.intake['campaign'], self.rules)
 
     @cached_property
     def settlement(self):
-        return reconcile(self.intake, self.plans, self.photos, self.coverage, self.penalties)
+        return reconcile(self.intake, self.plans, self.photos, self.coverage, self.penalties, self.rules)

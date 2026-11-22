@@ -13,6 +13,10 @@ REASONS = {
     'BAD_OBSERVATION': '清点行格式无效', 'OBSERVATION_CONFLICT': '同商品清点结果矛盾',
     'MISSING_SKU': '应陈商品未出现', 'WRONG_SKU': '出现陈列图外的商品',
     'UNDER_FACINGS': '应陈商品排面不足', 'PRICE_MISMATCH': '标价与陈列图不符',
+    'BAD_RULE_VERSION': '规则版本编号无效', 'RULE_MISSING': '巡检时刻无生效罚则',
+    'RULE_OVERLAP': '巡检时刻有多版罚则', 'RULE_VERSION_CONFLICT': '同一规则版本费率矛盾',
+    'RULE_CATALOG_EMPTY': '罚则表没有可用版本', 'RULE_VERSION_MISMATCH': '柜位规则版本与巡检时刻不符',
+    'RULE_AMOUNT_MISMATCH': '柜位执行额与适用规则费率不符',
 }
 
 

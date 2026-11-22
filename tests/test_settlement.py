@@ -14,7 +14,7 @@ from app.store import Store
 
 def test_field_settlement_matches_source_shelf_and_amount_ledgers(field):
     sheet = field.settlement
-    assert sheet['balanced'] is True and sheet['original_cents'] == 29500
+    assert sheet['balanced'] is True and sheet['original_cents'] == 31500
     assert sheet['counts'] == {'COMPLIANT': 8, 'VIOLATION': 3, 'PENDING': 3, 'ISOLATED': 3}
     assert sheet['sources']['observations'] == {'input': 50, 'accepted': 40, 'isolated': 10, 'blank': 0, 'repeated_headers': 0}
     assert sum(row['isolated'] for row in sheet['sources'].values()) == len(sheet['quarantine']) == 22
@@ -50,7 +50,7 @@ def test_concurrent_runs_publish_only_one_complete_snapshot(settings):
     with ThreadPoolExecutor(max_workers=4) as pool:
         results = list(pool.map(lambda _: run_audit(settings, store, Options()), range(4)))
     assert sum(not reused for _, reused in results) == 1
-    assert {snapshot['settlement']['original_cents'] for snapshot, _ in results} == {29500}
+    assert {snapshot['settlement']['original_cents'] for snapshot, _ in results} == {31500}
     with sqlite3.connect(settings.database) as connection:
         assert connection.execute('SELECT COUNT(*) FROM runs').fetchone() == (1,)
 

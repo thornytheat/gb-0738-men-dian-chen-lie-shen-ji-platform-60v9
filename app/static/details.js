@@ -87,8 +87,8 @@ function coverage(root, payload) {
 
 function penalties(root, payload, filter) {
   const rows = payload.rows.filter(row => !filter || (filter.key ? filter.key === row.key : filter.group === row.group && filter.outcome === row.status));
-  root.append(table([['柜位'], ['状态'], ['原因码'], ['命中罚则与金额'], ['执行额 · 元', 'num'], ['生效版'], ['照片'], ['清点源行']],
-    rows.map(row => [row.key, flag(row.status), row.reason,
+  root.append(table([['柜位'], ['状态'], ['原因码'], ['适用规则版本'], ['命中罚则与金额'], ['执行额 · 元', 'num'], ['生效版'], ['照片'], ['清点源行']],
+    rows.map(row => [row.key, flag(row.status), row.reason, row.rule_version || (row.rule_candidates.join(' / ') || '—'),
       row.candidates.map(entry => `${reason(entry.code)} ${money(entry.cents)}`).join(' / ') || '—', money(row.original_cents), row.plan?.plan,
       row.evidence?.photos.map(pic => `${pic.photo} / ${source(pic.source)}`).join(' · '), row.evidence?.completed_sources.join(' / ')])));
   if (rows.length === 1) {
@@ -99,10 +99,26 @@ function penalties(root, payload, filter) {
   }
 }
 
+function ruleVersions(root, payload, filter) {
+  if (!payload.rules) return;
+  const versions = payload.rules.versions || [];
+  group(root, '罚则版本执行额', table([['规则版本'], ['生效区间 UTC'], ['缺品', 'num'], ['错品', 'num'], ['排面', 'num'], ['价签', 'num'],
+    ['违规柜', 'num'], ['执行额 · 元', 'num'], ['来源']], versions.map(row => [
+    row.version, `${row.start_utc} → ${row.end_utc}`, money(row.rates.MISSING_SKU), money(row.rates.WRONG_SKU),
+    money(row.rates.UNDER_FACINGS), money(row.rates.PRICE_MISMATCH), row.violations, money(row.original_cents),
+    source(row.source),
+  ])));
+  const perSlot = (payload.rules.rows || []).filter(row => !filter || (filter.key ? filter.key === row.key : filter.group === row.group && filter.outcome === row.status));
+  group(root, '逐柜适用规则版本', table([['柜位'], ['巡检 UTC'], ['规则版本'], ['执行罚则'], ['执行额 · 元', 'num'], ['候选版本']],
+    perSlot.map(row => [row.key, row.visit_at_utc, row.rule_version || '—', row.applied_rule || '—', money(row.original_cents),
+      (row.rule_candidates || []).join(' / ') || '—'])));
+}
+
 function settlement(root, payload) {
   root.append(table([['店组'], ...outcomes.map(key => [names[key], 'num']), ['原罚额 · 元', 'num']], payload.strata.map(row => [
     row.code, ...outcomes.map(key => row.counts[key]), money(row.original_cents),
   ])));
+  ruleVersions(root, payload);
   group(root, '原件行数勾稽', table([['档件'], ['输入', 'num'], ['采信', 'num'], ['隔离', 'num'], ['空行', 'num'], ['表头', 'num']],
     Object.entries(payload.sources).map(([file, row]) => [file, row.input, row.accepted, row.isolated, row.blank, row.repeated_headers])));
   quarantine(root, payload.quarantine);

@@ -2,6 +2,7 @@ import re
 import unicodedata
 
 ID = re.compile(r'^[A-Z0-9][A-Z0-9_-]{0,31}$')
+RULE_VERSION_ID = re.compile(r'^[A-Za-z0-9][A-Za-z0-9._-]{0,31}$')
 INTEGER = re.compile(r'^(?:[0-9]+|[0-9]{1,3}(?:,[0-9]{3})+)$')
 
 
@@ -26,6 +27,13 @@ def sku(value):
     value = clean(value).casefold().upper()
     if not value or len(value) > 48 or any(unicodedata.category(piece).startswith('C') for piece in value):
         raise InvalidRow('BAD_SKU')
+    return value
+
+
+def rule_version_id(value):
+    value = clean(value)
+    if not RULE_VERSION_ID.fullmatch(value):
+        raise InvalidRow('BAD_RULE_VERSION')
     return value
 
 

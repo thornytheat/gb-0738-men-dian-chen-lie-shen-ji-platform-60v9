@@ -10,9 +10,9 @@ docker compose up --build
 
 浏览 [工作台](http://localhost:18427/)。选择「十一月 · 巡店原件」，保持目标 18 柜并运行。点击严重度矩阵的数字，按店组和状态查看柜位。点击柜位处置行，查看同柜命中的候选罚则及实际执行额。照片证据页可打开通过校验的原件，结算页可以追到隔离原值和源行。
 
-原件结果为抽中 17 柜，8 合规、3 违规、3 待证、3 隔离，原罚额 295 元。近郊组缺 1 个名册柜，保持缺额。另有「核验副本」，目标 18 柜全数合规。相同档件和抽样目标再次运行会取回同一批次及其异议记录。
+原件结果为抽中 17 柜，8 合规、3 违规、3 待证、3 隔离，原罚额 315 元。巡检跨 11 月 10 日罚则生效点：11 月 10 日前的柜位按 `2026.11-r1`、当日及以后按 `2026.11-r2` 计价。结算页与批次接口逐柜列出适用规则版本、命中候选和执行额，批次总额与逐柜合计、版本合计三方勾稽。近郊组缺 1 个名册柜，保持缺额。另有「核验副本」，目标 18 柜全数合规。相同档件和抽样目标再次运行会取回同一批次及其异议记录，不新增柜位也不改价。
 
-可在「异议复核」选 `002:A03`，提交发起事件，再录入复核决定。部分减免 6000 分后，原罚额仍为 295 元、净罚额为 235 元。工具条可下载一份 JSON 证据。
+可在「异议复核」选 `002:A03`，提交发起事件，再录入复核决定。部分减免 6000 分后，原罚额仍为 315 元、净罚额为 255 元。工具条可下载一份 JSON 证据。
 
 ```bash
 docker compose exec -T app pytest -q
@@ -30,7 +30,7 @@ uvicorn app.main:app --port 18427
 
 Compose 使用 `audit-data` 命名卷；本地数据库默认为 `data/audits.sqlite3`。可通过 `SHELF_DB_PATH` 指定新数据库。
 
-## 七个业务入口
+## 八个业务入口
 
 | 模块 | 入口 | 动作 |
 |---|---|---|
@@ -40,8 +40,9 @@ Compose 使用 `audit-data` 命名卷；本地数据库默认为 `data/audits.sq
 | 抽样覆盖 | `GET /api/coverage` | 按店组分配和确定性抽取柜位、保留未填额 |
 | 罚则裁决 | `GET /api/penalties` | 区分缺图、缺品及无法裁决，择一执行罚则 |
 | 结算勾稽 | `GET /api/settlement`、`POST /api/settlement/runs` | 对账预览或生成可复用的结算批次 |
+| 罚则版本 | `GET /api/settlement/runs/{run_id}/batch`、`GET /api/settlement/runs`、`POST /api/settlement/runs/{run_id}/rollback` | 逐柜规则版本与执行额、批次历史与回滚 |
 | 异议复核 | `GET /api/appeals/{run_id}`、`POST /api/appeals/{run_id}/events` | 查看并追加复核事件，核算净额 |
 
-预检接口接受 `dataset=field` 或 `dataset=reference`，以及可选 `sample_size`。运行提交同名 JSON 字段。使用 `GET /api/settlement/runs/{run_id}` 读取批次，使用 `GET /api/appeals/{run_id}/export` 下载证据。接口目录位于 `/docs`。
+预检接口接受 `dataset=field` 或 `dataset=reference`，以及可选 `sample_size`。运行提交同名 JSON 字段。使用 `GET /api/settlement/runs/{run_id}` 读取批次，`GET /api/settlement/runs/{run_id}/batch` 读取可交财务的逐柜版本与执行额，`GET /api/settlement/runs` 查看批次历史与失败记录，`POST /api/settlement/runs/{run_id}/rollback` 回滚到上一批次。使用 `GET /api/appeals/{run_id}/export` 下载证据。接口目录位于 `/docs`。
 
 [字段与规则](docs/DATA-DICTIONARY.md) · [测试证据](docs/DEPTH.md)
